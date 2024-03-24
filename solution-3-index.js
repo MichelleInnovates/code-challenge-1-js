@@ -1,78 +1,69 @@
-
 const readline = require('readline');
 
 const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
+    input: process.stdin,
+    output: process.stdout
 });
 
-const taxRates = [
-  { minIncome: 0, maxIncome: 24000, rate: 0.1 },
-  { minIncome: 24001, maxIncome: 32333, rate: 0.25 },
-  { minIncome: 32334, maxIncome: 500000, rate: 0.3 },
-  { minIncome: 500001, maxIncome: 800000, rate: 0.325 },
-  { minIncome: 800001, maxIncome: Infinity, rate: 0.35 }
-];
+rl.question('Enter your basic salary: ', (basicSalary) => {
+    rl.question('Enter your allowances: ', (benefits) => {
+        let totalSalary = (Number(basicSalary) + Number(benefits));
 
-const deductions = {
-  NHIF: [
-    { minSalary: 0, maxSalary: 5999, deduction: 150 },
-    { minSalary: 6000, maxSalary: 7999, deduction: 300 }
-  ],
-  NSSF: [
-    { minSalary: 0, maxSalary: 6000, deduction: 100 },
-    { minSalary: 6001, maxSalary: 7999, deduction: 150 },
-    { minSalary: 8000, maxSalary: 11999, deduction: 200 },
-    { minSalary: 12000, maxSalary: 14999, deduction: 250 },
-    { minSalary: 15000, maxSalary: 36000, deduction: 300 }
-  ]
-};
+        // PAYE calculation monthly
+        let totalPAYE;
+        if (totalSalary <= 24000) {
+            totalPAYE = totalSalary * (0.1 / 12);
+        } else if (totalSalary > 24000 && totalSalary <= 32333) {
+            totalPAYE = totalSalary * (0.25 / 12);
+        } else if (totalSalary > 32333 && totalSalary <= 500000) {
+            totalPAYE = totalSalary * (0.3 / 12);
+        } else if (totalSalary > 500000 && totalSalary <= 800000) {
+            totalPAYE = totalSalary * (0.325 / 12);
+        } else if (totalSalary > 800000) {
+            totalPAYE = totalSalary * (0.35 / 12);
+        }
 
-function calculateDeduction(deductionType, grossSalary) {
-  const applicableDeductions = deductions[deductionType];
-  for (let i = 0; i < applicableDeductions.length; i++) {
-    if (grossSalary >= applicableDeductions[i].minSalary && grossSalary <= applicableDeductions[i].maxSalary) {
-      return applicableDeductions[i].deduction;
-    }
-  }
-  return 0;
-}
+        // NHIF calculation
+        let totalNHIF;
+        if (totalSalary < 599) {
+            totalNHIF = 150;
+        } else if (totalSalary > 5999 && totalSalary < 7999) {
+            totalNHIF = 300;
+        } else if (totalSalary > 7999 && totalSalary < 11999) {
+            totalNHIF = 400;
+        } else if (totalSalary > 11999 && totalSalary < 14999) {
+            totalNHIF = 500;
+        } else if (totalSalary > 14999 && totalSalary < 19999) {
+            totalNHIF = 600;
+        } else if (totalSalary > 19999 && totalSalary < 24999) {
+            totalNHIF = 750;
+        } else if (totalSalary > 24999 && totalSalary < 29999) {
+            totalNHIF = 850;
+        } else if (totalSalary > 29999 && totalSalary < 34999) {
+            totalNHIF = 900;
+        } else if (totalSalary > 34999) {
+            totalNHIF = 950;
+        }
 
-function calculateTaxableIncome(grossSalary) {
-  const nssfDeduction = calculateDeduction('NSSF', grossSalary);
-  const nhifDeduction = calculateDeduction('NHIF', grossSalary);
-  const taxableIncome = grossSalary - nssfDeduction - nhifDeduction;
-  return taxableIncome;
-}
+        // NSSF calculation
+        let totalNSSF;
+        if (totalSalary > 36000) {
+            totalNSSF = (36000 * 0.06) * 2;
+        } else {
+            totalNSSF = (totalSalary * 0.06) * 2;
+        }
 
-function calculatePAYE(taxableIncome) {
-  let tax = 0;
-  for (let i = 0; i < taxRates.length; i++) {
-    if (taxableIncome > taxRates[i].minIncome) {
-      const max = taxRates[i].maxIncome === Infinity ? taxableIncome : taxRates[i].maxIncome;
-      tax += (Math.min(taxableIncome, max) - taxRates[i].minIncome) * taxRates[i].rate;
-    } else {
-      break;
-    }
-  }
-  return tax;
-}
+        // Housing Levy calculation
+        let totalHouseLevy = (totalSalary * 0.015) * 2;
 
-function calculateNetSalary(grossSalary, contributionBenefit) {
-  const taxableIncome = calculateTaxableIncome(grossSalary);
-  const paye = calculatePAYE(taxableIncome);
-  const netSalary = grossSalary + contributionBenefit - paye;
-  return netSalary;
-}
+        // Net salary calculation
+        let netSalary = totalSalary - (totalPAYE + totalNHIF + totalNSSF);
 
-rl.question('Enter gross salary: ', (grossSalary) => {
-  rl.question('Enter contribution benefit: ', (contributionBenefit) => {
-    grossSalary = parseFloat(grossSalary);
-    contributionBenefit = parseFloat(contributionBenefit);
+        console.log(`Total salary is ${totalSalary} & Net salary is ${netSalary}`);
 
-    const netSalary = calculateNetSalary(grossSalary, contributionBenefit);
-    console.log(`Net Salary: ${netSalary}`);
+        console.log(`Total salary   Total PAYE   Total NHIF   Total NSSF   Net Salary`);
+        console.log(`${totalSalary}, ${totalPAYE}, ${totalNHIF}, ${totalNSSF}, ${netSalary}`);
 
-    rl.close();
-  });
+        rl.close();
+    });
 });
